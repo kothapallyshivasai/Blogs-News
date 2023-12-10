@@ -1,12 +1,58 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.views.decorators.cache import never_cache
+from django.contrib.auth import authenticate, login
 
 def index(request):
+
+    user = request.user
+    if user.is_superuser:
+        return redirect("/admin")
+            
+    if user.is_authenticated:
+        return redirect("/user/home")
+
     return render(request, 'nonlogin/index.html', {})
 
+@never_cache
+def user_login(request):
+    if request.method == "GET":
+        user = request.user
+        if user.is_superuser:
+            return redirect("/admin")
+        
+        if user.is_authenticated:
+            return redirect("/user/home")
+
+        return render(request, 'nonlogin/user_login.html', {})
+
+    elif request.method == "POST":
+        user = authenticate(request, username=request.POST.get("username"), password=request.POST.get("password"))
+        if user is not None:
+            login(request, user)  
+            return redirect("/user/home")
+        else:
+            return render(request, 'nonlogin/user_login.html', {'error_message': True})
 
 
+@never_cache
+def admin_login(request):
+    if request.method == "GET":
+        user = request.user
+        if user.is_superuser:
+            return redirect("/admin")
+        
+        if user.is_authenticated:
+            return redirect("/user/home")
 
+        return render(request, 'nonlogin/admin_login.html', {})
 
+    elif request.method == "POST":
+        user = authenticate(request, username=request.POST.get("username"), password=request.POST.get("password"))
+        if user is not None:
+            login(request, user)
+            return redirect("/user/home")
+        else:
+            return render(request, 'nonlogin/admin_login.html', {'error_message': True})
 
 
 # import requests
